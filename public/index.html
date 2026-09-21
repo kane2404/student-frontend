@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light">
+  <title>Registre des étudiants</title>
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="styles.css">
+  <script src="app.js" defer></script>
+</head>
+<body>
+  <div class="page">
+    <header class="entete">
+      <h1>Registre des étudiants</h1>
+      <button class="btn btn-primary" id="btn-add" type="button">Ajouter un étudiant</button>
+    </header>
+
+    <nav class="onglets" id="tabs" aria-label="Filtrer par statut"></nav>
+
+    <div class="outils">
+      <div class="champ champ-recherche">
+        <label for="search">Rechercher</label>
+        <input id="search" type="search" placeholder="Nom, prénom, e-mail ou numéro" autocomplete="off" maxlength="100">
+      </div>
+      <div class="champ champ-filiere">
+        <label for="filter-filiere">Filière</label>
+        <select id="filter-filiere"></select>
+      </div>
+    </div>
+
+    <div class="notice" id="notice" role="alert" hidden>
+      <p id="notice-text"></p>
+      <button class="btn btn-ghost" id="notice-retry" type="button">Réessayer</button>
+    </div>
+
+    <table class="registre" id="table">
+      <caption class="sr-only">Liste des étudiants</caption>
+      <thead>
+        <tr>
+          <th scope="col" class="c-num">Numéro</th>
+          <th scope="col" class="c-name">Étudiant</th>
+          <th scope="col" class="c-birth">Naissance</th>
+          <th scope="col" class="c-filiere">Filière</th>
+          <th scope="col" class="c-niveau">Niveau</th>
+          <th scope="col" class="c-statut">Statut</th>
+          <th scope="col" class="c-actions"><span class="sr-only">Actions</span></th>
+        </tr>
+      </thead>
+      <tbody id="rows"></tbody>
+    </table>
+
+    <div class="vide" id="empty" hidden>
+      <p id="empty-text"></p>
+      <button class="btn btn-primary" id="empty-add" type="button" hidden>Ajouter un étudiant</button>
+    </div>
+
+    <footer class="pagination" id="pagination" hidden>
+      <p id="page-info"></p>
+      <div class="pagination-boutons">
+        <button class="btn btn-ghost" id="prev" type="button">Précédent</button>
+        <button class="btn btn-ghost" id="next" type="button">Suivant</button>
+      </div>
+    </footer>
+
+    <noscript><p class="notice-statique">Cette application a besoin de JavaScript pour fonctionner.</p></noscript>
+  </div>
+
+  <!-- Ajout / modification -->
+  <dialog id="student-dialog" aria-labelledby="dialog-title">
+    <form id="student-form" novalidate>
+      <h2 id="dialog-title"></h2>
+      <p class="form-erreur" id="form-error" role="alert" hidden></p>
+
+      <div class="grille">
+        <div class="champ">
+          <label for="f-prenom">Prénom</label>
+          <input id="f-prenom" name="prenom" type="text" maxlength="80" autocomplete="off" required>
+          <p class="erreur" id="e-prenom" hidden></p>
+        </div>
+        <div class="champ">
+          <label for="f-nom">Nom</label>
+          <input id="f-nom" name="nom" type="text" maxlength="80" autocomplete="off" required>
+          <p class="erreur" id="e-nom" hidden></p>
+        </div>
+        <div class="champ pleine">
+          <label for="f-email">Adresse e-mail</label>
+          <input id="f-email" name="email" type="email" maxlength="254" autocomplete="off" required>
+          <p class="erreur" id="e-email" hidden></p>
+        </div>
+        <div class="champ">
+          <label for="f-date_naissance">Date de naissance</label>
+          <input id="f-date_naissance" name="date_naissance" type="date" min="1900-01-01" required>
+          <p class="erreur" id="e-date_naissance" hidden></p>
+        </div>
+        <div class="champ">
+          <label for="f-filiere">Filière</label>
+          <input id="f-filiere" name="filiere" type="text" maxlength="80" list="filieres-list" autocomplete="off" required>
+          <datalist id="filieres-list"></datalist>
+          <p class="erreur" id="e-filiere" hidden></p>
+        </div>
+        <div class="champ">
+          <label for="f-niveau">Niveau</label>
+          <select id="f-niveau" name="niveau" required>
+            <option value="L1">L1</option>
+            <option value="L2">L2</option>
+            <option value="L3">L3</option>
+            <option value="M1">M1</option>
+            <option value="M2">M2</option>
+          </select>
+          <p class="erreur" id="e-niveau" hidden></p>
+        </div>
+        <div class="champ">
+          <label for="f-statut">Statut</label>
+          <select id="f-statut" name="statut">
+            <option value="inscrit">Inscrit</option>
+            <option value="diplome">Diplômé</option>
+            <option value="suspendu">Suspendu</option>
+          </select>
+          <p class="erreur" id="e-statut" hidden></p>
+        </div>
+      </div>
+
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" id="form-cancel" type="button">Annuler</button>
+        <button class="btn btn-primary" id="form-submit" type="submit"></button>
+      </div>
+    </form>
+  </dialog>
+
+  <!-- Suppression -->
+  <dialog id="delete-dialog" aria-labelledby="delete-title">
+    <form id="delete-form" method="dialog">
+      <h2 id="delete-title"></h2>
+      <p id="delete-text">Cette action est définitive : la fiche sera retirée du registre.</p>
+      <p class="form-erreur" id="delete-error" role="alert" hidden></p>
+      <div class="dialog-actions">
+        <button class="btn btn-ghost" id="delete-cancel" type="button">Annuler</button>
+        <button class="btn btn-danger" id="delete-confirm" type="submit">Supprimer l'étudiant</button>
+      </div>
+    </form>
+  </dialog>
+
+  <p class="toast" id="toast" role="status" aria-live="polite" hidden></p>
+</body>
+</html>

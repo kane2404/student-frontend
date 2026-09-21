@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: student-frontend
+  labels:
+    app.kubernetes.io/name: student-frontend
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: student-management
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 0
+      maxSurge: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: student-frontend
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: student-frontend
+        app.kubernetes.io/component: frontend
+        app.kubernetes.io/part-of: student-management
+    spec:
+      serviceAccountName: student-frontend
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: frontend
+          # Nom court : le registre et le tag sont définis par la section `images:` des overlays.
+          image: student-frontend
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            # Nom complet (FQDN) obligatoire : le resolver de nginx ignore les "search domains".
+            # Si le domaine du cluster n'est pas "cluster.local", adaptez-le dans un overlay.
+            - name: BACKEND_URL
+              value: http://student-backend.$(POD_NAMESPACE).svc.cluster.local:3000
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 20
+            timeoutSeconds: 2
+          resources:
+            requests:
+              cpu: 20m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 96Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            # nginx : PID, fichiers temporaires et configuration générée au démarrage
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}

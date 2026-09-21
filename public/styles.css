@@ -1,0 +1,414 @@
+/*
+  Registre des étudiants : page de cahier à réglure Seyès.
+  Papier blanc bleuté, encre bleu-noir, marge rouge. Polices système uniquement
+  (aucune ressource externe : l'application fonctionne aussi hors connexion).
+*/
+
+:root {
+  --papier: #f7f9fd;
+  --encre: #1c2758;
+  --encre-douce: #4a5484;
+  --trait: 108 134 201;          /* bleu Seyès, utilisé avec transparence */
+  --marge: #c93c34;
+  --marge-fonce: #a12b25;
+  --surface: #ffffff;
+  --bordure: #aab6dc;
+  --focus: #5b7be0;
+
+  --info-fond: #e4eafb;   --info: #23357a;
+  --ok-fond: #ddf1e6;     --ok: #1a613f;
+  --alerte-fond: #fbe6e3; --alerte: #952822;
+
+  --marge-x: 72px;
+  --serif: "Iowan Old Style", "Palatino Linotype", Palatino, "Book Antiqua", Georgia, serif;
+  --sans: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+[hidden] { display: none !important; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  color: var(--encre);
+  font-family: var(--sans);
+  font-size: 1rem;
+  line-height: 1.5;
+  background-color: var(--papier);
+  /* Réglure Seyès : lignes fines tous les 8px, lignes fortes et verticales tous les 32px */
+  background-image:
+    linear-gradient(to right, rgb(var(--trait) / .16) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--trait) / .22) 1px, transparent 1px),
+    linear-gradient(to bottom, rgb(var(--trait) / .10) 1px, transparent 1px);
+  background-size: 32px 32px, 32px 32px, 8px 8px;
+}
+
+/* Marge rouge du cahier */
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  bottom: 0;
+  left: var(--marge-x);
+  width: 2px;
+  background: rgb(201 60 52 / .7);
+  pointer-events: none;
+}
+
+.page {
+  max-width: calc(var(--marge-x) + 1180px);
+  padding: 40px 32px 80px calc(var(--marge-x) + 32px);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ---------- En-tête ---------- */
+
+.entete {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px 24px;
+  margin-bottom: 24px;
+}
+
+h1 {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: clamp(2rem, 4.2vw, 2.9rem);
+  font-weight: 700;
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+}
+
+h2 {
+  margin: 0 0 16px;
+  font-family: var(--serif);
+  font-size: 1.5rem;
+  line-height: 1.2;
+}
+
+/* ---------- Boutons ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color .12s ease, border-color .12s ease;
+}
+.btn:disabled { cursor: progress; opacity: .65; }
+
+.btn-primary { background: var(--encre); color: #fff; }
+.btn-primary:hover:not(:disabled) { background: #2a3a80; }
+
+.btn-ghost { background: var(--surface); color: var(--encre); border-color: var(--bordure); }
+.btn-ghost:hover:not(:disabled) { border-color: var(--encre); }
+
+.btn-danger { background: var(--marge); color: #fff; }
+.btn-danger:hover:not(:disabled) { background: var(--marge-fonce); }
+
+:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+
+/* ---------- Onglets de statut (filtres + compteurs) ---------- */
+
+.onglets {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 20px;
+  margin-bottom: 16px;
+}
+
+.onglet {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  min-height: 44px;
+  padding: 8px 2px 6px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  background: none;
+  color: var(--encre-douce);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+.onglet:hover { color: var(--encre); }
+.onglet[aria-pressed="true"] { color: var(--encre); border-bottom-color: var(--marge); }
+.onglet .compte { font-weight: 400; font-variant-numeric: tabular-nums; }
+
+/* ---------- Champs ---------- */
+
+.outils {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+.champ-recherche { flex: 1 1 280px; max-width: 460px; }
+.champ-filiere { flex: 0 1 240px; }
+
+.champ label {
+  display: block;
+  margin-bottom: 4px;
+  font-size: .875rem;
+  font-weight: 600;
+  color: var(--encre-douce);
+}
+
+input, select {
+  width: 100%;
+  min-height: 44px;
+  padding: 8px 12px;
+  border: 1px solid var(--bordure);
+  border-radius: 6px;
+  background: var(--surface);
+  color: var(--encre);
+  font: inherit;
+}
+input:focus-visible, select:focus-visible { border-color: var(--encre); }
+input[aria-invalid="true"] { border-color: var(--marge); }
+
+.erreur {
+  margin: 4px 0 0;
+  font-size: .875rem;
+  color: var(--alerte);
+}
+.erreur[hidden] { display: none; }
+
+/* ---------- Bandeau d'erreur ---------- */
+
+.notice {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px 16px;
+  border-left: 4px solid var(--marge);
+  border-radius: 4px;
+  background: var(--alerte-fond);
+  color: var(--alerte);
+}
+.notice[hidden] { display: none; }
+.notice p { margin: 0; font-weight: 600; }
+
+.notice-statique { padding: 12px 16px; background: var(--alerte-fond); color: var(--alerte); }
+
+/* ---------- Registre (tableau) ---------- */
+
+.registre {
+  width: 100%;
+  border-collapse: collapse;
+  transition: opacity .15s ease;
+}
+.registre[aria-busy="true"] { opacity: .5; }
+
+.registre th {
+  padding: 0 12px 8px;
+  border-bottom: 2px solid var(--encre);
+  text-align: left;
+  font-size: .875rem;
+  font-weight: 700;
+  color: var(--encre-douce);
+}
+
+.registre th:first-child, .registre td:first-child { padding-left: 0; }
+.registre th:last-child, .registre td:last-child { padding-right: 0; }
+
+.registre td {
+  height: 56px;
+  padding: 0 12px;
+  border-bottom: 1px solid rgb(var(--trait) / .55);
+  vertical-align: middle;
+}
+.registre tbody tr:hover { background: rgb(255 255 255 / .7); }
+
+.c-num, .c-birth, .c-niveau { font-variant-numeric: tabular-nums; white-space: nowrap; }
+.c-actions { text-align: right; white-space: nowrap; }
+
+.etudiant { display: block; }
+.etudiant .nom { font-weight: 700; }
+.etudiant .email {
+  display: block;
+  max-width: 34ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: .875rem;
+  color: var(--encre-douce);
+}
+
+/* Cellule "filière + niveau" : réservée à la vue compacte */
+.c-meta { display: none; }
+
+.pastille {
+  display: inline-block;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: .8125rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.pastille-inscrit { background: var(--info-fond); color: var(--info); }
+.pastille-diplome { background: var(--ok-fond); color: var(--ok); }
+.pastille-suspendu { background: var(--alerte-fond); color: var(--alerte); }
+
+.lien {
+  min-height: 44px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--encre);
+  font: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-decoration-color: rgb(var(--trait) / .8);
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+.lien:hover { text-decoration-color: currentColor; }
+.lien-danger { color: var(--marge-fonce); }
+
+/* ---------- État vide ---------- */
+
+.vide {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 32px 12px;
+}
+.vide[hidden] { display: none; }
+.vide p { margin: 0; max-width: 46ch; font-family: var(--serif); font-size: 1.25rem; }
+
+/* ---------- Pagination ---------- */
+
+.pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 20px;
+}
+.pagination[hidden] { display: none; }
+.pagination p { margin: 0; color: var(--encre-douce); font-variant-numeric: tabular-nums; }
+.pagination-boutons { display: flex; gap: 8px; }
+
+/* ---------- Boîtes de dialogue ---------- */
+
+dialog {
+  width: min(560px, calc(100vw - 32px));
+  padding: 28px;
+  border: 0;
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--encre);
+  box-shadow: 0 20px 60px rgb(28 39 88 / .35);
+}
+dialog::backdrop { background: rgb(28 39 88 / .5); }
+
+.grille {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.pleine { grid-column: 1 / -1; }
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 24px;
+}
+
+.form-erreur {
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border-left: 4px solid var(--marge);
+  background: var(--alerte-fond);
+  color: var(--alerte);
+  font-weight: 600;
+}
+.form-erreur[hidden] { display: none; }
+
+/* ---------- Notification ---------- */
+
+.toast {
+  position: fixed;
+  left: calc(var(--marge-x) + 32px);
+  bottom: 24px;
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 8px;
+  background: var(--encre);
+  color: #fff;
+  font-weight: 600;
+  box-shadow: 0 8px 24px rgb(28 39 88 / .3);
+}
+.toast[hidden] { display: none; }
+
+/* ---------- Petits écrans : chaque ligne du registre devient une fiche ---------- */
+
+@media (max-width: 1220px) {
+  :root { --marge-x: 20px; }
+  .page { padding: 24px 16px 64px calc(var(--marge-x) + 16px); }
+  .toast { left: calc(var(--marge-x) + 16px); right: 16px; }
+
+  .registre, .registre tbody, .registre tr, .registre td { display: block; }
+  .registre thead { display: none; }
+
+  .registre tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "name    statut"
+      "meta    meta"
+      "actions actions";
+    align-items: start;
+    gap: 0 16px;
+    padding: 10px 0 4px;
+    border-bottom: 1px solid rgb(var(--trait) / .55);
+  }
+  .registre td { height: auto; padding: 4px 0; border: 0; }
+  .registre td:first-child, .registre td:last-child { padding: 4px 0; }
+  .registre .c-num, .registre .c-birth, .registre .c-filiere, .registre .c-niveau { display: none; }
+  .registre .c-meta { display: block; grid-area: meta; color: var(--encre-douce); }
+  .registre .c-name { grid-area: name; }
+  .registre .c-statut { grid-area: statut; }
+  .registre .c-actions { grid-area: actions; text-align: left; margin-left: -8px; }
+
+  .etudiant .email { max-width: none; white-space: normal; overflow-wrap: anywhere; }
+}
+
+@media (max-width: 520px) {
+  .grille { grid-template-columns: 1fr; }
+  dialog { padding: 20px; }
+  .dialog-actions { flex-direction: column-reverse; }
+  .dialog-actions .btn { width: 100%; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { transition: none !important; }
+}

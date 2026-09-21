@@ -1,0 +1,22 @@
+# Point d'entrée HTTP(S). L'hôte, la classe d'Ingress et le TLS sont définis par les overlays.
+# Le frontend (nginx) relaie lui-même /api vers le backend : une seule règle suffit.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: student-frontend
+  labels:
+    app.kubernetes.io/name: student-frontend
+    app.kubernetes.io/component: frontend
+    app.kubernetes.io/part-of: student-management
+spec:
+  rules:
+    - host: students.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: student-frontend
+                port:
+                  name: http
