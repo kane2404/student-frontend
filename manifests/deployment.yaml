@@ -33,7 +33,7 @@ spec:
       containers:
         - name: frontend
           # Nom court : le registre et le tag sont définis par la section `images:` des overlays.
-          image: student-frontend
+          image: kane2404/student-frontend:v1
           ports:
             - name: http
               containerPort: 8080
